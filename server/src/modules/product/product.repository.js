@@ -7,8 +7,8 @@ class ProductRepository {
     });
   }
 
-  async findById(id) {
-    return prisma.product.findFirst({
+  async findById(id, tx = prisma) {
+    return tx.product.findFirst({
       where: {
         id,
         deletedAt: null,
@@ -66,14 +66,7 @@ class ProductRepository {
     });
   }
 
-  async findMany({
-    skip,
-    take,
-    search,
-    categoryId,
-    status,
-    featured,
-  }) {
+  async findMany({ skip, take, search, categoryId, status, featured }) {
     return prisma.product.findMany({
       where: {
         deletedAt: null,
@@ -129,12 +122,7 @@ class ProductRepository {
     });
   }
 
-  async count({
-    search,
-    categoryId,
-    status,
-    featured,
-  }) {
+  async count({ search, categoryId, status, featured }) {
     return prisma.product.count({
       where: {
         deletedAt: null,
