@@ -8,3 +8,1322 @@ datasource db {
   directUrl = env("DIRECT_URL")
 } 
 
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  OUT_OF_STOCK
+  INACTIVE
+  ARCHIVED
+}
+
+enum CollectionStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  ORDER
+  RETURN
+  CANCELLATION
+  MANUAL_ADJUSTMENT
+  DAMAGED
+  RESTOCK
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKING
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NET_BANKING
+  COD
+  WALLET
+}
+
+enum AddressType {
+  HOME
+  WORK
+  OTHER
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum CouponStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AttributeType {
+  PRODUCT
+  VARIANT
+}  
+
+enum AttributeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Category {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  parentId        String?          @map("parent_id") @db.Uuid
+
+  name            String           @db.VarChar(100)
+
+  slug            String           @unique @db.VarChar(120)
+
+  description     String?
+
+  imageUrl        String?          @map("image_url")
+
+  displayOrder    Int              @default(0) @map("display_order")
+
+  status          CategoryStatus   @default(ACTIVE)
+
+  metaTitle       String?          @map("meta_title") @db.VarChar(255)
+
+  metaDescription String?          @map("meta_description")
+
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  parent          Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id])
+
+  children        Category[]       @relation("CategoryHierarchy")
+
+  products        Product[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([parentId])
+
+  @@index([status])
+
+  @@index([displayOrder])
+
+  @@map("categories")
+} 
+
+model Product {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  categoryId        String          @map("category_id") @db.Uuid
+
+  productCode       String          @unique @map("product_code") @db.VarChar(50)
+
+  name              String          @db.VarChar(200)
+
+  slug              String          @unique @db.VarChar(220)
+
+  shortDescription  String?         @map("short_description")
+
+  description       String
+
+  status            ProductStatus   @default(DRAFT)
+
+  isFeatured        Boolean         @default(false) @map("is_featured")
+
+  metaTitle         String?         @map("meta_title") @db.VarChar(255)
+
+  metaDescription   String?         @map("meta_description")
+
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  category          Category        @relation(fields: [categoryId], references: [id])
+
+  variants          ProductVariant[]
+
+  productAttributes ProductAttributeValue[]
+
+  images            ProductImage[]
+
+  collections       ProductCollection[]
+
+  tags              ProductTag[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([categoryId])
+
+  @@index([status])
+
+  @@index([isFeatured])
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  productId         String         @map("product_id") @db.Uuid
+
+  sku               String         @unique @db.VarChar(100)
+
+  price             Decimal        @db.Decimal(10,2)
+
+  compareAtPrice    Decimal?       @map("compare_at_price") @db.Decimal(10,2)
+
+  costPrice         Decimal?       @map("cost_price") @db.Decimal(10,2)
+
+  barcode           String?        @unique @db.VarChar(100)
+
+  weight            Decimal?       @db.Decimal(8,2)
+
+  status            ProductStatus  @default(ACTIVE)
+
+  isDefault         Boolean        @default(false) @map("is_default")
+
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  deletedAt         DateTime?      @map("deleted_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  product           Product                    @relation(fields: [productId], references: [id])
+
+  attributeValues   VariantAttributeValue[]
+
+  images            ProductImage[]
+
+  inventory         Inventory?
+
+  cartItems         CartItem[]
+
+  orderItems        OrderItem[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([productId])
+
+  @@index([status])
+
+  @@index([price])
+
+  @@map("product_variants")
+} 
+
+model Attribute {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  name            String         @unique @db.VarChar(100)
+
+  slug            String         @unique @db.VarChar(100)
+
+  type            AttributeType
+
+  displayOrder    Int            @default(0) @map("display_order")
+
+  isRequired      Boolean        @default(false) @map("is_required")
+
+  isFilterable    Boolean        @default(true) @map("is_filterable")
+
+  status AttributeStatus @default(ACTIVE)
+
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  values                AttributeValue[]
+
+  productAttributeValues ProductAttributeValue[]
+
+  variantAttributeValues VariantAttributeValue[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([type])
+
+  @@index([status])
+
+  @@index([displayOrder])
+
+  @@map("attributes")
+} 
+
+model AttributeValue {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  attributeId     String      @map("attribute_id") @db.Uuid
+
+  value           String      @db.VarChar(100)
+
+  slug            String      @db.VarChar(120)
+
+  displayOrder    Int         @default(0) @map("display_order")
+
+  colorCode       String?     @map("color_code") @db.VarChar(20)
+
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  attribute        Attribute                @relation(fields: [attributeId], references: [id])
+
+  productAttributes ProductAttributeValue[]
+
+  variantAttributes VariantAttributeValue[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@unique([attributeId, value])
+
+  @@unique([attributeId, slug])
+
+  @@index([attributeId])
+
+  @@index([displayOrder])
+
+  @@map("attribute_values")
+} 
+
+model ProductAttributeValue {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  productId         String          @map("product_id") @db.Uuid
+
+  attributeId       String          @map("attribute_id") @db.Uuid
+
+  attributeValueId  String          @map("attribute_value_id") @db.Uuid
+
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  product           Product         @relation(fields: [productId], references: [id])
+
+  attribute         Attribute       @relation(fields: [attributeId], references: [id])
+
+  attributeValue    AttributeValue  @relation(fields: [attributeValueId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes & Constraints
+  ---------------------------------
+  */
+
+  @@unique([productId, attributeId])
+
+  @@unique([productId, attributeValueId])
+
+  @@index([productId])
+
+  @@index([attributeId])
+
+  @@index([attributeValueId])
+
+  @@map("product_attribute_values")
+} 
+
+model VariantAttributeValue {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  productVariantId String         @map("product_variant_id") @db.Uuid
+
+  attributeId      String         @map("attribute_id") @db.Uuid
+
+  attributeValueId String         @map("attribute_value_id") @db.Uuid
+
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  attribute        Attribute      @relation(fields: [attributeId], references: [id])
+
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id])
+
+  /*
+  ---------------------------------
+  Constraints
+  ---------------------------------
+  */
+
+  @@unique([productVariantId, attributeId])
+
+  @@unique([productVariantId, attributeValueId])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([productVariantId])
+
+  @@index([attributeId])
+
+  @@index([attributeValueId])
+
+  @@map("variant_attribute_values")
+} 
+
+model ProductImage {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  productId        String          @map("product_id") @db.Uuid
+
+  productVariantId String?         @map("product_variant_id") @db.Uuid
+
+  imageUrl         String          @map("image_url")
+
+  cloudinaryPublicId String?       @map("cloudinary_public_id")
+
+  altText          String?         @map("alt_text") @db.VarChar(255)
+
+  displayOrder     Int             @default(0) @map("display_order")
+
+  isPrimary        Boolean         @default(false) @map("is_primary")
+
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  product          Product         @relation(fields: [productId], references: [id])
+
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([productId])
+
+  @@index([productVariantId])
+
+  @@index([displayOrder])
+
+  @@map("product_images")
+} 
+
+model Collection {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  name            String             @unique @db.VarChar(100)
+
+  slug            String             @unique @db.VarChar(120)
+
+  description     String?
+
+  bannerImageUrl  String?            @map("banner_image_url") 
+
+  cloudinaryPublicId String?         @map("cloudinary_public_id")
+
+  metaTitle       String?            @map("meta_title") @db.VarChar(255)
+
+  metaDescription String?            @map("meta_description")
+
+  displayOrder    Int                @default(0) @map("display_order")
+
+  isFeatured      Boolean            @default(false) @map("is_featured")
+
+  status          CollectionStatus   @default(ACTIVE)
+
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  deletedAt       DateTime?          @map("deleted_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  products         ProductCollection[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([status])
+
+  @@index([displayOrder])
+
+  @@index([isFeatured])
+
+  @@map("collections")
+} 
+
+model ProductCollection {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  productId      String      @map("product_id") @db.Uuid
+
+  collectionId   String      @map("collection_id") @db.Uuid
+
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  product         Product     @relation(fields: [productId], references: [id])
+
+  collection      Collection  @relation(fields: [collectionId], references: [id])
+
+  /*
+  ---------------------------------
+  Constraints
+  ---------------------------------
+  */
+
+  @@unique([productId, collectionId])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([productId])
+
+  @@index([collectionId])
+
+  @@map("product_collections")
+} 
+
+model Tag {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  name            String      @unique @db.VarChar(100)
+
+  slug            String      @unique @db.VarChar(120)
+
+  description     String?
+
+  displayOrder    Int         @default(0) @map("display_order")
+
+  isFeatured      Boolean     @default(false) @map("is_featured")
+
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  products        ProductTag[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([displayOrder])
+
+  @@index([isFeatured])
+
+  @@map("tags")
+} 
+
+model ProductTag {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  productId   String      @map("product_id") @db.Uuid
+
+  tagId       String      @map("tag_id") @db.Uuid
+
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  product     Product     @relation(fields: [productId], references: [id])
+
+  tag         Tag         @relation(fields: [tagId], references: [id])
+
+  /*
+  ---------------------------------
+  Constraints
+  ---------------------------------
+  */
+
+  @@unique([productId, tagId])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([productId])
+
+  @@index([tagId])
+
+  @@map("product_tags")
+} 
+
+model User {
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  clerkUserId       String       @unique @map("clerk_user_id")
+
+  firstName         String?      @map("first_name") @db.VarChar(100)
+
+  lastName          String?      @map("last_name") @db.VarChar(100)
+
+  email             String       @unique @db.VarChar(255)
+
+  phone             String?      @db.VarChar(20)
+
+  profileImageUrl   String?      @map("profile_image_url")
+
+  role              UserRole     @default(CUSTOMER)
+
+  status            UserStatus   @default(ACTIVE)
+
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  deletedAt         DateTime?    @map("deleted_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  addresses         Address[]
+
+  cart              Cart?
+
+  orders            Order[]
+
+  reviews           Review[]
+
+  wishlists          Wishlist[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([role])
+
+  @@index([status])
+
+  @@map("users")
+}  
+
+model Address {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  userId            String        @map("user_id") @db.Uuid
+
+  type              AddressType
+
+  fullName          String        @map("full_name") @db.VarChar(150)
+
+  phone             String        @db.VarChar(20)
+
+  addressLine1      String        @map("address_line_1") @db.VarChar(255)
+
+  addressLine2      String?       @map("address_line_2") @db.VarChar(255)
+
+  landmark          String?       @db.VarChar(255)
+
+  city              String        @db.VarChar(100)
+
+  state             String        @db.VarChar(100)
+
+  postalCode        String        @map("postal_code") @db.VarChar(20)
+
+  country           String        @default("India") @db.VarChar(100)
+
+  isDefault         Boolean       @default(false) @map("is_default")
+
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  user              User          @relation(fields: [userId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([userId])
+
+  @@index([city])
+
+  @@index([state])
+
+  @@map("addresses")
+} 
+
+model Inventory {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  productVariantId   String          @unique @map("product_variant_id") @db.Uuid
+
+  quantityAvailable  Int             @default(0) @map("quantity_available")
+
+  quantityReserved   Int             @default(0) @map("quantity_reserved")
+
+  lowStockThreshold  Int             @default(5) @map("low_stock_threshold") 
+
+  lastStockUpdatedAt DateTime?       @map("last_stock_updated_at") @db.Timestamptz(6)
+
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  productVariant     ProductVariant          @relation(fields: [productVariantId], references: [id])
+
+  transactions       InventoryTransaction[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([quantityAvailable])
+
+  @@map("inventory")
+} 
+
+model InventoryTransaction {
+  id                  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  inventoryId         String                       @map("inventory_id") @db.Uuid
+
+  type                InventoryTransactionType
+
+  quantity            Int
+
+  reason              String? @db.VarChar(255)  
+
+  notes  String?
+
+  referenceId         String?                      @map("reference_id") @db.Uuid
+
+  createdByUserId     String?                      @map("created_by_user_id") @db.Uuid
+
+  createdAt           DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  inventory           Inventory                    @relation(fields: [inventoryId], references: [id])
+
+  createdBy           User?                        @relation(fields: [createdByUserId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([inventoryId])
+
+  @@index([type])
+
+  @@index([createdAt])
+
+  @@index([createdByUserId])
+
+  @@map("inventory_transactions")
+} 
+
+model Cart {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  userId            String      @unique @map("user_id") @db.Uuid
+
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  user              User        @relation(fields: [userId], references: [id])
+
+  items             CartItem[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([userId])
+
+  @@map("carts")
+} 
+
+model CartItem {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  cartId            String      @map("cart_id") @db.Uuid
+
+  productVariantId  String      @map("product_variant_id") @db.Uuid
+
+  quantity          Int         @default(1) 
+
+  isSelected        Boolean     @default(true) @map("is_selected")
+
+  unitPrice         Decimal     @map("unit_price") @db.Decimal(10,2)
+
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  cart              Cart             @relation(fields: [cartId], references: [id])
+
+  productVariant    ProductVariant   @relation(fields: [productVariantId], references: [id])
+
+  /*
+  ---------------------------------
+  Constraints
+  ---------------------------------
+  */
+
+  @@unique([cartId, productVariantId])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([cartId])
+
+  @@index([productVariantId])
+
+  @@map("cart_items")
+} 
+
+model Order {
+  id                     String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  orderNumber            String          @unique @map("order_number") @db.VarChar(30)
+
+  userId                 String          @map("user_id") @db.Uuid
+
+  addressId              String?         @map("address_id") @db.Uuid
+
+  /*
+  ---------------------------------
+  Shipping Address Snapshot
+  ---------------------------------
+  */
+
+  shippingFullName       String          @map("shipping_full_name") @db.VarChar(150)
+
+  shippingPhone          String          @map("shipping_phone") @db.VarChar(20)
+
+  shippingAddressLine1   String          @map("shipping_address_line_1") @db.VarChar(255)
+
+  shippingAddressLine2   String?         @map("shipping_address_line_2") @db.VarChar(255)
+
+  shippingLandmark       String?         @map("shipping_landmark") @db.VarChar(255)
+
+  shippingCity           String          @map("shipping_city") @db.VarChar(100)
+
+  shippingState          String          @map("shipping_state") @db.VarChar(100)
+
+  shippingPostalCode     String          @map("shipping_postal_code") @db.VarChar(20)
+
+  shippingCountry        String          @default("India") @map("shipping_country") @db.VarChar(100)
+
+  /*
+  ---------------------------------
+  Pricing
+  ---------------------------------
+  */
+
+  subtotal               Decimal         @db.Decimal(10,2)
+
+  discountAmount         Decimal         @default(0) @map("discount_amount") @db.Decimal(10,2)
+
+  shippingAmount         Decimal         @default(0) @map("shipping_amount") @db.Decimal(10,2)
+
+  taxAmount              Decimal         @default(0) @map("tax_amount") @db.Decimal(10,2)
+
+  totalAmount            Decimal         @map("total_amount") @db.Decimal(10,2)
+
+  /*
+  ---------------------------------
+  Order Information
+  ---------------------------------
+  */
+
+  status                 OrderStatus     @default(PENDING)
+
+  notes                  String? 
+
+  placedAt               DateTime        @default(now()) @map("placed_at") @db.Timestamptz(6)
+
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt              DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  user                   User            @relation(fields: [userId], references: [id])
+
+  address                Address?        @relation(fields: [addressId], references: [id])
+
+  orderItems             OrderItem[]
+
+  payment                Payment?
+
+  statusHistory          OrderStatusHistory[]
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([userId])
+
+  @@index([status])
+
+  @@index([createdAt])
+
+  @@map("orders")
+} 
+
+model OrderItem {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  orderId            String         @map("order_id") @db.Uuid
+
+  productVariantId   String         @map("product_variant_id") @db.Uuid
+
+  productName        String         @map("product_name") @db.VarChar(200)
+
+  sku                String         @db.VarChar(100)
+
+  quantity           Int
+
+  unitPrice          Decimal        @map("unit_price") @db.Decimal(10,2)
+
+  subtotal           Decimal        @db.Decimal(10,2)
+
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  order              Order          @relation(fields: [orderId], references: [id])
+
+  productVariant     ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([orderId])
+
+  @@index([productVariantId])
+
+  @@map("order_items")
+} 
+
+model OrderStatusHistory {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  orderId          String        @map("order_id") @db.Uuid
+
+  status           OrderStatus
+
+  notes            String?
+
+  createdByUserId  String?       @map("created_by_user_id") @db.Uuid
+
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  order            Order         @relation(fields: [orderId], references: [id])
+
+  createdBy        User?         @relation(fields: [createdByUserId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([orderId])
+
+  @@index([status])
+
+  @@index([createdAt])
+
+  @@index([createdByUserId])
+
+  @@map("order_status_history")
+} 
+
+model Payment {
+  id                     String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  orderId                String          @unique @map("order_id") @db.Uuid
+
+  paymentMethod          PaymentMethod   @map("payment_method")
+
+  status                 PaymentStatus   @default(PENDING)
+
+  amount                 Decimal         @db.Decimal(10,2)
+
+  transactionId          String?         @unique @map("transaction_id") @db.VarChar(255)
+
+  paymentGateway         String          @default("RAZORPAY") @map("payment_gateway") @db.VarChar(50)
+
+  gatewayOrderId         String?         @unique @map("gateway_order_id") @db.VarChar(255)
+
+  gatewayPaymentId       String?         @unique @map("gateway_payment_id") @db.VarChar(255)
+
+  gatewaySignature       String?         @map("gateway_signature")
+
+  gatewayResponse        Json?           @map("gateway_response")
+
+  paidAt                DateTime?        @map("paid_at") @db.Timestamptz(6)
+
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt             DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  order                 Order            @relation(fields: [orderId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([status])
+
+  @@index([paymentMethod])
+
+  @@index([createdAt])
+
+  @@map("payments")
+} 
+
+model Review {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  userId            String          @map("user_id") @db.Uuid
+
+  productId         String          @map("product_id") @db.Uuid
+
+  orderItemId       String          @unique @map("order_item_id") @db.Uuid
+
+  rating            Int
+
+  title             String?         @db.VarChar(150)
+
+  comment           String?
+
+  status            ReviewStatus    @default(PENDING)
+
+  isVerifiedPurchase Boolean        @default(true) @map("is_verified_purchase")
+
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  user              User            @relation(fields: [userId], references: [id])
+
+  product           Product         @relation(fields: [productId], references: [id])
+
+  orderItem         OrderItem       @relation(fields: [orderItemId], references: [id])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([userId])
+
+  @@index([productId])
+
+  @@index([status])
+
+  @@index([rating])
+
+  @@map("reviews")
+} 
+
+model Coupon {
+  id                    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code                  String          @unique @db.VarChar(50)
+
+  name                  String          @db.VarChar(150)
+
+  description           String?
+
+  discountType          DiscountType    @map("discount_type")
+
+  discountValue         Decimal         @map("discount_value") @db.Decimal(10,2)
+
+  minimumOrderAmount    Decimal?        @map("minimum_order_amount") @db.Decimal(10,2)
+
+  maximumDiscountAmount Decimal?        @map("maximum_discount_amount") @db.Decimal(10,2)
+
+  usageLimit            Int?            @map("usage_limit")
+
+  usageCount            Int             @default(0) @map("usage_count")
+
+  startsAt              DateTime        @map("starts_at") @db.Timestamptz(6)
+
+  expiresAt             DateTime        @map("expires_at") @db.Timestamptz(6)
+
+  status                CouponStatus    @default(ACTIVE)
+
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  updatedAt             DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([code])
+
+  @@index([status])
+
+  @@index([startsAt])
+
+  @@index([expiresAt])
+
+  @@map("coupons")
+} 
+
+model Wishlist {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  userId           String      @map("user_id") @db.Uuid
+
+  productId        String      @map("product_id") @db.Uuid
+
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /*
+  ---------------------------------
+  Relationships
+  ---------------------------------
+  */
+
+  user             User        @relation(fields: [userId], references: [id])
+
+  product          Product     @relation(fields: [productId], references: [id])
+
+  /*
+  ---------------------------------
+  Constraints
+  ---------------------------------
+  */
+
+  @@unique([userId, productId])
+
+  /*
+  ---------------------------------
+  Indexes
+  ---------------------------------
+  */
+
+  @@index([userId])
+
+  @@index([productId])
+
+  @@map("wishlists")
+}
