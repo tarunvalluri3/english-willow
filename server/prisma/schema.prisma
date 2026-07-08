@@ -8,10 +8,3 @@ datasource db {
   directUrl = env("DIRECT_URL")
 } 
 
-model Test {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  createdAt DateTime @default(now())
-
-  @@map("test")
-}
