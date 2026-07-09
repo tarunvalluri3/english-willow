@@ -39,6 +39,16 @@ class CartRepository {
       },
     });
   }
+
+  async deleteManyByIds(ids, tx = prisma) {
+    return tx.cartItem.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+  }
 }
 
 export default new CartRepository();

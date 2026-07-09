@@ -1,7 +1,12 @@
-const generateOrderNumber = (sequence) => {
+const generateOrderNumber = (orderId) => {
   const year = new Date().getFullYear();
 
-  return `EW-${year}-${String(sequence).padStart(6, "0")}`;
+  const uniquePart = orderId
+    .replace(/-/g, "")
+    .substring(0, 6)
+    .toUpperCase();
+
+  return `EW-${year}-${uniquePart}`;
 };
 
 export default generateOrderNumber;
