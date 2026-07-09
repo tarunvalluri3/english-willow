@@ -26,21 +26,27 @@ router.post(
   "/",
   authMiddleware,
   validate(createPaymentSchema),
-  paymentController.createPayment
+  paymentController.createPayment,
+);
+
+router.post(
+  "/:id/razorpay-order",
+  authMiddleware,
+  paymentController.createRazorpayOrder,
 );
 
 router.post(
   "/verify",
   authMiddleware,
   validate(verifyPaymentSchema),
-  paymentController.verifyPayment
+  paymentController.verifyPayment,
 );
 
 router.get(
   "/:id",
   authMiddleware,
   validate(paymentIdSchema),
-  paymentController.getPaymentById
+  paymentController.getPaymentById,
 );
 
 /*
@@ -54,7 +60,7 @@ router.get(
   authMiddleware,
   adminMiddleware,
   validate(listPaymentsSchema),
-  paymentController.getPayments
+  paymentController.getPayments,
 );
 
 router.patch(
@@ -62,7 +68,7 @@ router.patch(
   authMiddleware,
   adminMiddleware,
   validate(refundPaymentSchema),
-  paymentController.refundPayment
+  paymentController.refundPayment,
 );
 
 export default router;
