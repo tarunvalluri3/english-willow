@@ -11,7 +11,12 @@ import addressRoutes from "../modules/address/address.routes.js";
 import couponRoutes from "../modules/coupon/coupon.routes.js"; 
 import uploadRoutes from "../modules/upload/upload.routes.js";
 import notificationRoutes from "../modules/notification/notification.routes.js";
-import dashboardRoutes from "../modules/dashboard/dashboard.routes.js"; 
+import dashboardRoutes from "../modules/dashboard/dashboard.routes.js";
+import authRoutes from "../modules/auth/auth.routes.js"; 
+import clerkWebhookRoutes from "../modules/webhook/clerkWebhook.routes.js"; 
+import userRoutes from "../modules/user/user.routes.js";
+
+
 
 const router = Router();
 
@@ -19,6 +24,8 @@ const router = Router();
 Feature Routes
 */
 
+router.use("/webhooks", clerkWebhookRoutes);
+router.use("/auth", authRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/products", productRoutes);
 router.use("/inventory", inventoryRoutes);
@@ -31,7 +38,8 @@ router.use("/addresses", addressRoutes);
 router.use("/coupons", couponRoutes); 
 router.use("/uploads", uploadRoutes);
 router.use("/notifications", notificationRoutes); 
-router.use("/dashboard", dashboardRoutes);
+router.use("/dashboard", dashboardRoutes); 
+router.use("/users", userRoutes);
 
 /*
 Health Check

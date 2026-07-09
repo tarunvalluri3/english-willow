@@ -11,11 +11,19 @@ import routes from "./routes/index.js";
 import notFoundMiddleware from "./middleware/notFound.middleware.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 
+import clerkWebhookRoutes from "./modules/webhook/clerkWebhook.routes.js";
+
 const app = express();
 
 /*
  Global Middleware
-*/
+*/ 
+
+app.use(
+  "/api/webhooks",
+  express.raw({ type: "application/json" }),
+  clerkWebhookRoutes,
+);
 
 app.use(
   cors({
