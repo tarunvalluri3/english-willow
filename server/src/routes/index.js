@@ -7,6 +7,11 @@ import wishlistRoutes from "../modules/wishlist/wishlist.routes.js";
 import orderRoutes from "../modules/order/order.routes.js";
 import paymentRoutes from "../modules/payment/payment.routes.js";
 import reviewRoutes from "../modules/review/review.routes.js";
+import addressRoutes from "../modules/address/address.routes.js";
+import couponRoutes from "../modules/coupon/coupon.routes.js"; 
+import uploadRoutes from "../modules/upload/upload.routes.js";
+import notificationRoutes from "../modules/notification/notification.routes.js";
+import dashboardRoutes from "../modules/dashboard/dashboard.routes.js"; 
 
 const router = Router();
 
@@ -22,6 +27,11 @@ router.use("/wishlist", wishlistRoutes);
 router.use("/orders", orderRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/reviews", reviewRoutes);
+router.use("/addresses", addressRoutes); 
+router.use("/coupons", couponRoutes); 
+router.use("/uploads", uploadRoutes);
+router.use("/notifications", notificationRoutes); 
+router.use("/dashboard", dashboardRoutes);
 
 /*
 Health Check
