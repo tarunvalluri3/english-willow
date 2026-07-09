@@ -482,7 +482,6 @@ class OrderService {
         inventory.id,
         {
           quantityAvailable: inventory.quantityAvailable - item.quantity,
-
           lastStockUpdatedAt: new Date(),
         },
         tx,
@@ -498,7 +497,7 @@ class OrderService {
 
           reason: "Customer order placed.",
 
-          referenceId: null, // Updated after the Order is created
+          referenceId,
 
           createdByUserId: userId,
         },
