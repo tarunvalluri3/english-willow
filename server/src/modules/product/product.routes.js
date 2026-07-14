@@ -10,6 +10,7 @@ import {
   createProductSchema,
   updateProductSchema,
   productIdSchema,
+  productSlugSchema,
   listProductsSchema,
 } from "./product.validator.js";
 
@@ -21,17 +22,15 @@ const router = Router();
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/",
-  validate(listProductsSchema),
-  productController.getProducts
-);
+router.get("/", validate(listProductsSchema), productController.getProducts);
 
 router.get(
-  "/:id",
-  validate(productIdSchema),
-  productController.getProductById
+  "/slug/:slug",
+  validate(productSlugSchema),
+  productController.getProductBySlug,
 );
+
+router.get("/:id", validate(productIdSchema), productController.getProductById);
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +43,7 @@ router.post(
   authMiddleware,
   adminMiddleware,
   validate(createProductSchema),
-  productController.createProduct
+  productController.createProduct,
 );
 
 router.patch(
@@ -52,7 +51,7 @@ router.patch(
   authMiddleware,
   adminMiddleware,
   validate(updateProductSchema),
-  productController.updateProduct
+  productController.updateProduct,
 );
 
 router.delete(
@@ -60,7 +59,7 @@ router.delete(
   authMiddleware,
   adminMiddleware,
   validate(productIdSchema),
-  productController.deleteProduct
+  productController.deleteProduct,
 );
 
 export default router;

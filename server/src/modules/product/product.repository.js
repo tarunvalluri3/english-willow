@@ -16,6 +16,16 @@ class ProductRepository {
     });
   }
 
+  async findActiveById(id, tx = prisma) {
+    return tx.product.findFirst({
+      where: {
+        id,
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+    });
+  }
+
   async findByProductCode(productCode) {
     return prisma.product.findFirst({
       where: {
@@ -66,6 +76,16 @@ class ProductRepository {
     });
   }
 
+  async findActiveBySlug(slug, tx = prisma) {
+    return tx.product.findFirst({
+      where: {
+        slug,
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+    });
+  }
+
   async findMany({ skip, take, search, categoryId, status, featured }) {
     return prisma.product.findMany({
       where: {
@@ -96,7 +116,7 @@ class ProductRepository {
 
         ...(categoryId && { categoryId }),
 
-        ...(status && { status }),
+        status: "ACTIVE",
 
         ...(featured !== undefined && {
           isFeatured: featured,
@@ -152,7 +172,7 @@ class ProductRepository {
 
         ...(categoryId && { categoryId }),
 
-        ...(status && { status }),
+        status: "ACTIVE",
 
         ...(featured !== undefined && {
           isFeatured: featured,

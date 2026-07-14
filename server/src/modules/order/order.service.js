@@ -19,6 +19,7 @@ import productVariantRepository from "../product/productVariant.repository.js";
 
 import inventoryRepository from "../inventory/inventory.repository.js";
 import inventoryTransactionRepository from "../inventory/inventoryTransaction.repository.js";
+import couponService from "../coupon/coupon.service.js";
 
 class OrderService {
   async getOrders(userId, query) {
@@ -85,7 +86,23 @@ class OrderService {
     |--------------------------------------------------------------------------
     */
 
-      const totals = this._calculateOrderTotals(selectedItems);
+      const baseTotals = this._calculateOrderTotals(selectedItems);
+
+      const couponApplication = data.couponCode
+        ? await couponService.applyCoupon(
+            {
+              code: data.couponCode,
+              // Always calculate the eligible amount from server-side cart data.
+              orderAmount: baseTotals.subtotal,
+            },
+            tx,
+          )
+        : null;
+
+      const totals = this._calculateOrderTotals(
+        selectedItems,
+        couponApplication?.discount ?? 0,
+      );
 
       /*
     |--------------------------------------------------------------------------
@@ -110,6 +127,8 @@ class OrderService {
           ...shippingSnapshot,
 
           ...totals,
+
+          couponCode: couponApplication?.coupon.code ?? null,
 
           notes: data.notes,
         },
@@ -150,6 +169,13 @@ class OrderService {
         selectedItems.map((item) => item.id),
         tx,
       );
+
+      if (couponApplication) {
+        await couponService.incrementCouponUsage(
+          couponApplication.coupon.id,
+          tx,
+        );
+      }
 
       /*
     |--------------------------------------------------------------------------
@@ -361,21 +387,22 @@ class OrderService {
     });
   }
 
-  _calculateOrderTotals(cartItems) {
+  _calculateOrderTotals(cartItems, discountAmount = 0) {
     const subtotal = cartItems.reduce((total, item) => {
       return total + Number(item.unitPrice) * item.quantity;
     }, 0);
 
+    const appliedDiscount = Math.min(Number(discountAmount), subtotal);
+
     // Future modules
-    const discountAmount = 0;
     const shippingAmount = 0;
     const taxAmount = 0;
 
-    const totalAmount = subtotal - discountAmount + shippingAmount + taxAmount;
+    const totalAmount = subtotal - appliedDiscount + shippingAmount + taxAmount;
 
     return {
       subtotal: Number(subtotal.toFixed(2)),
-      discountAmount: Number(discountAmount.toFixed(2)),
+      discountAmount: Number(appliedDiscount.toFixed(2)),
       shippingAmount: Number(shippingAmount.toFixed(2)),
       taxAmount: Number(taxAmount.toFixed(2)),
       totalAmount: Number(totalAmount.toFixed(2)),

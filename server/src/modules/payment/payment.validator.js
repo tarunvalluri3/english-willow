@@ -22,11 +22,7 @@ export const createPaymentSchema = z.object({
   body: z.object({
     orderId: z.uuid("Invalid order ID."),
 
-    paymentMethod: z.enum([
-      "COD",
-      "RAZORPAY",
-      "STRIPE",
-    ]),
+    paymentMethod: z.enum(["UPI", "CARD", "NET_BANKING", "COD", "WALLET"]),
   }),
 });
 
@@ -38,7 +34,7 @@ export const createPaymentSchema = z.object({
 
 export const verifyPaymentSchema = z.object({
   body: z.object({
-    paymentId: z.string().min(1),
+    paymentId: z.uuid("Invalid payment ID."),
 
     paymentGatewayOrderId: z.string().min(1),
 
@@ -60,11 +56,7 @@ export const refundPaymentSchema = z.object({
   }),
 
   body: z.object({
-    reason: z
-      .string()
-      .trim()
-      .max(500)
-      .optional(),
+    reason: z.string().trim().max(500).optional(),
   }),
 });
 
@@ -80,8 +72,12 @@ export const listPaymentsSchema = z.object({
 
     limit: z.coerce.number().int().positive().max(100).optional(),
 
-    status: z.string().optional(),
+    status: z
+      .enum(["PENDING", "PAID", "FAILED", "REFUNDED", "PARTIALLY_REFUNDED"])
+      .optional(),
 
-    paymentMethod: z.string().optional(),
+    paymentMethod: z
+      .enum(["UPI", "CARD", "NET_BANKING", "COD", "WALLET"])
+      .optional(),
   }),
 });

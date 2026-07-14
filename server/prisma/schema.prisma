@@ -952,6 +952,8 @@ model Order {
 
   discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(10, 2)
 
+  couponCode String? @map("coupon_code") @db.VarChar(50)
+
   shippingAmount Decimal @default(0) @map("shipping_amount") @db.Decimal(10, 2)
 
   taxAmount Decimal @default(0) @map("tax_amount") @db.Decimal(10, 2)
@@ -998,6 +1000,7 @@ model Order {
 
   @@index([userId])
   @@index([status])
+  @@index([couponCode])
   @@index([createdAt])
   @@map("orders")
 }
@@ -1256,3 +1259,4 @@ model Wishlist {
   @@index([productId])
   @@map("wishlists")
 }
+

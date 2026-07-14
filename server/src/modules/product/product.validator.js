@@ -74,53 +74,23 @@ const updateProductSchema = z.object({
     .object({
       categoryId: categoryIdSchema.optional(),
 
-      productCode: z
-        .string()
-        .trim()
-        .min(1)
-        .max(50)
-        .optional(),
+      productCode: z.string().trim().min(1).max(50).optional(),
 
-      name: z
-        .string()
-        .trim()
-        .min(2)
-        .max(200)
-        .optional(),
+      name: z.string().trim().min(2).max(200).optional(),
 
-      shortDescription: z
-        .string()
-        .trim()
-        .max(500)
-        .optional(),
+      shortDescription: z.string().trim().max(500).optional(),
 
-      description: z
-        .string()
-        .trim()
-        .min(10)
-        .optional(),
+      description: z.string().trim().min(10).optional(),
 
       isFeatured: z.boolean().optional(),
 
-      status: z.enum([
-        "DRAFT",
-        "ACTIVE",
-        "OUT_OF_STOCK",
-        "INACTIVE",
-        "ARCHIVED",
-      ]).optional(),
-
-      metaTitle: z
-        .string()
-        .trim()
-        .max(255)
+      status: z
+        .enum(["DRAFT", "ACTIVE", "OUT_OF_STOCK", "INACTIVE", "ARCHIVED"])
         .optional(),
 
-      metaDescription: z
-        .string()
-        .trim()
-        .max(500)
-        .optional(),
+      metaTitle: z.string().trim().max(255).optional(),
+
+      metaDescription: z.string().trim().max(500).optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {
       message: "At least one field is required to update.",
@@ -136,6 +106,16 @@ const updateProductSchema = z.object({
 const productIdSchema = z.object({
   params: z.object({
     id: uuidSchema,
+  }),
+});
+
+const productSlugSchema = z.object({
+  params: z.object({
+    slug: z
+      .string()
+      .trim()
+      .min(1, "Product slug is required.")
+      .max(220, "Product slug is invalid."),
   }),
 });
 
@@ -155,19 +135,15 @@ const listProductsSchema = z.object({
 
     categoryId: categoryIdSchema.optional(),
 
-    status: z.enum([
-      "DRAFT",
-      "ACTIVE",
-      "OUT_OF_STOCK",
-      "INACTIVE",
-      "ARCHIVED",
-    ]).optional(),
+    status: z
+      .enum(["DRAFT", "ACTIVE", "OUT_OF_STOCK", "INACTIVE", "ARCHIVED"])
+      .optional(),
 
     featured: z
       .enum(["true", "false"])
       .optional()
       .transform((value) =>
-        value === undefined ? undefined : value === "true"
+        value === undefined ? undefined : value === "true",
       ),
   }),
 });
@@ -176,5 +152,6 @@ export {
   createProductSchema,
   updateProductSchema,
   productIdSchema,
+  productSlugSchema,
   listProductsSchema,
 };

@@ -16,7 +16,15 @@ const uuidSchema = z.string().uuid("Invalid ID.");
 
 const createOrderSchema = z.object({
   body: z.object({
-    addressId: uuidSchema.optional(),
+    addressId: uuidSchema,
+
+    couponCode: z
+      .string()
+      .trim()
+      .min(3, "Coupon code must be at least 3 characters.")
+      .max(50, "Coupon code cannot exceed 50 characters.")
+      .transform((value) => value.toUpperCase())
+      .optional(),
 
     notes: z
       .string()
@@ -73,11 +81,14 @@ const updateOrderStatusSchema = z.object({
     status: z.enum([
       "PENDING",
       "CONFIRMED",
-      "PROCESSING",
+      "PACKING",
       "SHIPPED",
+      "OUT_FOR_DELIVERY",
       "DELIVERED",
       "CANCELLED",
+      "RETURN_REQUESTED",
       "RETURNED",
+      "REFUNDED",
     ]),
 
     notes: z
@@ -104,11 +115,14 @@ const listOrdersSchema = z.object({
       .enum([
         "PENDING",
         "CONFIRMED",
-        "PROCESSING",
+        "PACKING",
         "SHIPPED",
+        "OUT_FOR_DELIVERY",
         "DELIVERED",
         "CANCELLED",
+        "RETURN_REQUESTED",
         "RETURNED",
+        "REFUNDED",
       ])
       .optional(),
   }),

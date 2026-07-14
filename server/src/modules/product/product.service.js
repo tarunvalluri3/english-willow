@@ -1,9 +1,6 @@
 import ApiError from "../../common/ApiError.js";
 import generateSlug from "../../common/slugify.js";
-import {
-  getPagination,
-  getPaginationMeta,
-} from "../../common/pagination.js";
+import { getPagination, getPaginationMeta } from "../../common/pagination.js";
 
 import productRepository from "./product.repository.js";
 import categoryRepository from "../category/category.repository.js";
@@ -20,15 +17,15 @@ class ProductService {
       throw new ApiError(400, "Category is inactive.");
     }
 
-    const existingProductCode =
-      await productRepository.findByProductCode(data.productCode);
+    const existingProductCode = await productRepository.findByProductCode(
+      data.productCode,
+    );
 
     if (existingProductCode) {
       throw new ApiError(409, "Product code already exists.");
     }
 
-    const existingProduct =
-      await productRepository.findByName(data.name);
+    const existingProduct = await productRepository.findByName(data.name);
 
     if (existingProduct) {
       throw new ApiError(409, "Product name already exists.");
@@ -36,8 +33,7 @@ class ProductService {
 
     const slug = generateSlug(data.name);
 
-    const existingSlug =
-      await productRepository.findBySlug(slug);
+    const existingSlug = await productRepository.findBySlug(slug);
 
     if (existingSlug) {
       throw new ApiError(409, "Generated slug already exists.");
@@ -57,7 +53,6 @@ class ProductService {
       take: limit,
       search: query.search?.trim(),
       categoryId: query.categoryId,
-      status: query.status,
       featured: query.featured,
     };
 
@@ -73,7 +68,17 @@ class ProductService {
   }
 
   async getProductById(id) {
-    const product = await productRepository.findById(id);
+    const product = await productRepository.findActiveById(id);
+
+    if (!product) {
+      throw new ApiError(404, "Product not found.");
+    }
+
+    return product;
+  }
+
+  async getProductBySlug(slug) {
+    const product = await productRepository.findActiveBySlug(slug);
 
     if (!product) {
       throw new ApiError(404, "Product not found.");
@@ -103,10 +108,7 @@ class ProductService {
 
     if (data.productCode) {
       const existingProductCode =
-        await productRepository.findByProductCodeExceptId(
-          data.productCode,
-          id
-        );
+        await productRepository.findByProductCodeExceptId(data.productCode, id);
 
       if (existingProductCode) {
         throw new ApiError(409, "Product code already exists.");
@@ -114,11 +116,10 @@ class ProductService {
     }
 
     if (data.name) {
-      const existingProduct =
-        await productRepository.findByNameExceptId(
-          data.name,
-          id
-        );
+      const existingProduct = await productRepository.findByNameExceptId(
+        data.name,
+        id,
+      );
 
       if (existingProduct) {
         throw new ApiError(409, "Product name already exists.");
@@ -126,8 +127,7 @@ class ProductService {
 
       data.slug = generateSlug(data.name);
 
-      const existingSlug =
-        await productRepository.findBySlug(data.slug);
+      const existingSlug = await productRepository.findBySlug(data.slug);
 
       if (existingSlug && existingSlug.id !== id) {
         throw new ApiError(409, "Generated slug already exists.");
