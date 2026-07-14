@@ -50,6 +50,7 @@ class UserController {
     const user = await userService.updateUserStatus(
       req.params.id,
       req.body.status,
+      req.user,
     );
 
     return res.status(200).json(
@@ -64,6 +65,7 @@ class UserController {
   deleteUser = asyncHandler(async (req, res) => {
     const result = await userService.deleteUser(
       req.params.id,
+      req.user,
     );
 
     return res.status(200).json(

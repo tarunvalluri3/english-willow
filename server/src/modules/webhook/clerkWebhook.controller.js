@@ -4,7 +4,7 @@ import clerkWebhookService from "./clerkWebhook.service.js";
 
 class ClerkWebhookController {
   handleWebhook = asyncHandler(async (req, res) => {
-    const { type, data } = req.body;
+    const { type, data } = req.webhookEvent;
 
     switch (type) {
       case "user.created":

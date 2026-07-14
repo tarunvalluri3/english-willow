@@ -39,6 +39,8 @@ class ReviewRepository {
   async findMany(filters, tx = prisma) {
     return tx.review.findMany({
       where: {
+        status: "APPROVED",
+
         ...(filters.productId && {
           productId: filters.productId,
         }),
@@ -71,6 +73,8 @@ class ReviewRepository {
   async count(filters, tx = prisma) {
     return tx.review.count({
       where: {
+        status: "APPROVED",
+
         ...(filters.productId && {
           productId: filters.productId,
         }),

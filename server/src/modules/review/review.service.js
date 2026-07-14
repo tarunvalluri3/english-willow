@@ -35,7 +35,7 @@ class ReviewService {
   async getReviewById(id) {
     const review = await reviewRepository.findById(id);
 
-    if (!review) {
+    if (!review || review.status !== "APPROVED") {
       throw new ApiError(404, "Review not found.");
     }
 

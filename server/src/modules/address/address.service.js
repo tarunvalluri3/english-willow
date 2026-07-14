@@ -10,16 +10,19 @@ import addressRepository from "./address.repository.js";
 
 class AddressService {
   async getAddresses(userId, query) {
-    const { page, limit } = getPagination(query);
+    const { page, limit, skip } = getPagination(query);
 
-    const addresses = await addressRepository.findByUserId(userId);
+    const [addresses, totalItems] = await Promise.all([
+      addressRepository.findByUserId(userId, { skip, take: limit }),
+      addressRepository.countByUserId(userId),
+    ]);
 
     return {
       addresses,
       meta: getPaginationMeta(
         page,
         limit,
-        addresses.length,
+        totalItems,
       ),
     };
   }
@@ -41,7 +44,7 @@ class AddressService {
     return prisma.$transaction(async (tx) => {
       if (data.isDefault) {
         const addresses =
-          await addressRepository.findByUserId(userId, tx);
+          await addressRepository.findByUserId(userId, {}, tx);
 
         for (const address of addresses) {
           if (address.isDefault) {
@@ -82,7 +85,7 @@ class AddressService {
 
       if (data.isDefault) {
         const addresses =
-          await addressRepository.findByUserId(userId, tx);
+          await addressRepository.findByUserId(userId, {}, tx);
 
         for (const item of addresses) {
           if (

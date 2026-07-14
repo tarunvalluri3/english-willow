@@ -115,7 +115,7 @@ const listInventoryTransactionsSchema = z.object({
 
     limit: z.coerce.number().int().min(1).max(100).optional(),
 
-    variantId: uuidSchema.optional(),
+    productVariantId: uuidSchema.optional(),
 
     type: transactionTypeSchema.optional(),
   }),

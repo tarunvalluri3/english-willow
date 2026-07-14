@@ -32,13 +32,17 @@ router.post(
           });
       }
 
-      const payload = JSON.stringify(req.body);
+      if (!Buffer.isBuffer(req.body)) {
+        throw new Error("Webhook payload must be raw bytes.");
+      }
+
+      const payload = req.body.toString("utf8");
 
       const wh = new Webhook(
         process.env.CLERK_WEBHOOK_SECRET,
       );
 
-      wh.verify(payload, {
+      req.webhookEvent = wh.verify(payload, {
         "svix-id": svixId,
         "svix-timestamp": svixTimestamp,
         "svix-signature": svixSignature,

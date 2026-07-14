@@ -13,7 +13,6 @@ import uploadRoutes from "../modules/upload/upload.routes.js";
 import notificationRoutes from "../modules/notification/notification.routes.js";
 import dashboardRoutes from "../modules/dashboard/dashboard.routes.js";
 import authRoutes from "../modules/auth/auth.routes.js";
-import clerkWebhookRoutes from "../modules/webhook/clerkWebhook.routes.js";
 import userRoutes from "../modules/user/user.routes.js";
 import catalogRoutes from "../modules/catalog/catalog.routes.js";
 
@@ -23,7 +22,6 @@ const router = Router();
 Feature Routes
 */
 
-router.use("/webhooks", clerkWebhookRoutes);
 router.use("/auth", authRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/products", productRoutes);

@@ -1,3 +1,9 @@
+import prisma from "../../config/prisma.js";
+import ApiError from "../../common/ApiError.js";
+
+import wishlistRepository from "./wishlist.repository.js";
+import productRepository from "../product/product.repository.js";
+
 class WishlistService {
   async getWishlist(userId) {
     return await wishlistRepository.findManyByUserId(userId);

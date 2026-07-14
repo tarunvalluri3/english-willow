@@ -37,6 +37,8 @@ class CouponService {
   }
 
   async createCoupon(data) {
+    this._validateCouponRules(data);
+
     const existingCoupon = await couponRepository.findByCode(data.code);
 
     if (existingCoupon) {
@@ -52,6 +54,8 @@ class CouponService {
     if (!coupon) {
       throw new ApiError(404, "Coupon not found.");
     }
+
+    this._validateCouponRules({ ...coupon, ...data });
 
     return couponRepository.update(id, data);
   }
@@ -132,6 +136,19 @@ class CouponService {
 
   async incrementCouponUsage(id, tx = prisma) {
     return couponRepository.incrementUsage(id, tx);
+  }
+
+  _validateCouponRules(coupon) {
+    if (
+      coupon.discountType === "PERCENTAGE" &&
+      Number(coupon.discountValue) > 100
+    ) {
+      throw new ApiError(400, "Percentage discount cannot exceed 100.");
+    }
+
+    if (new Date(coupon.expiresAt) <= new Date(coupon.startsAt)) {
+      throw new ApiError(400, "Expiry date must be after the start date.");
+    }
   }
 }
 

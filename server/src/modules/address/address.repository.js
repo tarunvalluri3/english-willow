@@ -15,7 +15,7 @@ class AddressRepository {
     });
   }
 
-  async findByUserId(userId, tx = prisma) {
+  async findByUserId(userId, options = {}, tx = prisma) {
     return tx.address.findMany({
       where: {
         userId,
@@ -23,7 +23,13 @@ class AddressRepository {
       orderBy: {
         createdAt: "desc",
       },
+      ...(options.skip !== undefined && { skip: options.skip }),
+      ...(options.take !== undefined && { take: options.take }),
     });
+  }
+
+  async countByUserId(userId, tx = prisma) {
+    return tx.address.count({ where: { userId } });
   }
 
   async findByIdAndUser(id, userId, tx = prisma) {

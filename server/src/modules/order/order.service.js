@@ -21,6 +21,19 @@ import inventoryRepository from "../inventory/inventory.repository.js";
 import inventoryTransactionRepository from "../inventory/inventoryTransaction.repository.js";
 import couponService from "../coupon/coupon.service.js";
 
+const allowedStatusTransitions = {
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PACKING", "CANCELLED"],
+  PACKING: ["SHIPPED", "CANCELLED"],
+  SHIPPED: ["OUT_FOR_DELIVERY"],
+  OUT_FOR_DELIVERY: ["DELIVERED"],
+  DELIVERED: ["RETURN_REQUESTED"],
+  RETURN_REQUESTED: ["RETURNED"],
+  RETURNED: ["REFUNDED"],
+  CANCELLED: [],
+  REFUNDED: [],
+};
+
 class OrderService {
   async getOrders(userId, query) {
     const { page, limit, skip } = getPagination(query);
@@ -211,8 +224,11 @@ class OrderService {
         throw new ApiError(400, `Order is already ${status.toLowerCase()}.`);
       }
 
-      if (order.status === "DELIVERED" || order.status === "RETURNED") {
-        throw new ApiError(400, "Order status can no longer be updated.");
+      if (!allowedStatusTransitions[order.status]?.includes(status)) {
+        throw new ApiError(
+          400,
+          `Cannot change order from ${order.status} to ${status}.`,
+        );
       }
 
       /*
@@ -288,16 +304,18 @@ class OrderService {
     |--------------------------------------------------------------------------
     */
 
-      if (order.status === "CANCELLED") {
-        throw new ApiError(400, "Order is already cancelled.");
+      if (!["PENDING", "CONFIRMED", "PACKING"].includes(order.status)) {
+        throw new ApiError(
+          400,
+          `Orders in ${order.status} status cannot be cancelled.`,
+        );
       }
 
-      if (order.status === "DELIVERED") {
-        throw new ApiError(400, "Delivered orders cannot be cancelled.");
-      }
-
-      if (order.status === "RETURNED") {
-        throw new ApiError(400, "Returned orders cannot be cancelled.");
+      if (order.payment?.status === "PAID") {
+        throw new ApiError(
+          400,
+          "Paid orders must be refunded instead of cancelled.",
+        );
       }
 
       /*
@@ -316,15 +334,14 @@ class OrderService {
           throw new ApiError(404, `Inventory not found for SKU ${item.sku}.`);
         }
 
-        await inventoryRepository.update(
-          inventory.id,
-          {
-            quantityAvailable: inventory.quantityAvailable + item.quantity,
-
+        await tx.inventory.update({
+          where: { id: inventory.id },
+          data: {
+            quantityAvailable: { increment: item.quantity },
+            quantityReserved: { decrement: item.quantity },
             lastStockUpdatedAt: new Date(),
           },
-          tx,
-        );
+        });
 
         await inventoryTransactionRepository.create(
           {
@@ -498,21 +515,24 @@ class OrderService {
         );
       }
 
-      if (inventory.quantityAvailable < item.quantity) {
+      const stockUpdate = await tx.inventory.updateMany({
+        where: {
+          id: inventory.id,
+          quantityAvailable: { gte: item.quantity },
+        },
+        data: {
+          quantityAvailable: { decrement: item.quantity },
+          quantityReserved: { increment: item.quantity },
+          lastStockUpdatedAt: new Date(),
+        },
+      });
+
+      if (stockUpdate.count !== 1) {
         throw new ApiError(
-          400,
+          409,
           `Insufficient inventory for SKU ${item.productVariant.sku}.`,
         );
       }
-
-      await inventoryRepository.update(
-        inventory.id,
-        {
-          quantityAvailable: inventory.quantityAvailable - item.quantity,
-          lastStockUpdatedAt: new Date(),
-        },
-        tx,
-      );
 
       await inventoryTransactionRepository.create(
         {

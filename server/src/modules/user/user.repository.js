@@ -100,6 +100,16 @@ class UserRepository {
     });
   }
 
+  async countActiveSuperAdmins(tx = prisma) {
+    return tx.user.count({
+      where: {
+        role: "SUPER_ADMIN",
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+    });
+  }
+
   async update(id, data, tx = prisma) {
     return tx.user.update({
       where: {

@@ -27,6 +27,8 @@ export const createCouponSchema = z.object({
       .max(50)
       .transform((value) => value.toUpperCase()),
 
+    name: z.string().trim().min(2).max(150),
+
     description: z
       .string()
       .trim()
@@ -62,7 +64,10 @@ export const createCouponSchema = z.object({
 
     expiresAt: z.coerce.date(),
 
-    isActive: z.boolean().optional(),
+    status: z.enum(["ACTIVE", "INACTIVE", "EXPIRED"]).optional(),
+  }).refine((data) => data.expiresAt > data.startsAt, {
+    message: "Expiry date must be after the start date.",
+    path: ["expiresAt"],
   }),
 });
 
@@ -113,7 +118,7 @@ export const updateCouponSchema = z.object({
 
     expiresAt: z.coerce.date().optional(),
 
-    isActive: z.boolean().optional(),
+    status: z.enum(["ACTIVE", "INACTIVE", "EXPIRED"]).optional(),
   }),
 });
 
@@ -149,7 +154,7 @@ export const listCouponsSchema = z.object({
 
     limit: z.coerce.number().int().positive().max(100).optional(),
 
-    isActive: z.coerce.boolean().optional(),
+    status: z.enum(["ACTIVE", "INACTIVE", "EXPIRED"]).optional(),
   }),
 });
 

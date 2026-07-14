@@ -13,7 +13,10 @@ class PaymentController {
   });
 
   getPaymentById = asyncHandler(async (req, res) => {
-    const payment = await paymentService.getPaymentById(req.params.id);
+    const payment = await paymentService.getPaymentById(
+      req.params.id,
+      req.user,
+    );
 
     return res
       .status(200)
@@ -21,7 +24,7 @@ class PaymentController {
   });
 
   createPayment = asyncHandler(async (req, res) => {
-    const payment = await paymentService.createPayment(req.body);
+    const payment = await paymentService.createPayment(req.user.id, req.body);
 
     return res
       .status(201)
@@ -29,7 +32,7 @@ class PaymentController {
   });
 
   verifyPayment = asyncHandler(async (req, res) => {
-    const payment = await paymentService.verifyPayment(req.body);
+    const payment = await paymentService.verifyPayment(req.user.id, req.body);
 
     return res
       .status(200)

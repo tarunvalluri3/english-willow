@@ -25,6 +25,16 @@ class CategoryRepository {
     });
   }
 
+  async findByNameExceptId(name, id) {
+    return prisma.category.findFirst({
+      where: {
+        name,
+        deletedAt: null,
+        NOT: { id },
+      },
+    });
+  }
+
   async findBySlug(slug) {
     return prisma.category.findUnique({
       where: {
